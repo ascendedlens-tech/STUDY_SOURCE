@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e2a;
+    --border: #252935;
+    --accent: #5b6ef5;
+    --accent2: #f5a623;
+    --accent3: #4ecdc4;
+    --text: #e8eaf0;
+    --text2: #7a7f9a;
+    --text3: #4a4f6a;
+    --correct: #2ecc71;
+    --wrong: #e74c3c;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+  /* LAYOUT */
+  .app { display: flex; flex: 1; min-height: 0; height: calc(100vh - 57px); }
+  /* SIDEBAR */
+  .sidebar {
+    width: 260px;
+    min-width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sidebar-header {
+    padding: 16px 16px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .sidebar-scroll { flex: 1; overflow-y: auto; padding: 6px 8px 12px; }
+  .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+  .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+  .sidebar-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  .subject-group { margin-bottom: 12px; }
+  .subject-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 6px 8px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: background 0.15s;
+  }
+  .subject-label:hover { background: var(--surface2); }
+  .subject-label .subj-name { display: flex; align-items: center; gap: 6px; }
+  .subject-label .subj-edit { opacity: 0; font-size: 12px; cursor: pointer; color: var(--text2); padding: 2px 4px; border-radius: 4px; }
+  .subject-label:hover .subj-edit { opacity: 1; }
+  .page-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text2);
+    transition: background 0.15s, color 0.15s;
+    position: relative;
+  }
+  .page-item:hover { background: var(--surface2); color: var(--text); }
+  .page-item.active { background: rgba(91,110,245,0.15); color: var(--accent); }
+  .page-item .page-icon { font-size: 14px; flex-shrink: 0; }
+  .page-item .page-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .page-item .page-actions { display: none; gap: 3px; }
+  .page-item:hover .page-actions { display: flex; }
+  .icon-btn {
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 3px 5px;
+    border-radius: 4px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .icon-btn:hover { background: var(--border); color: var(--text); }
+  .sidebar-footer { padding: 12px 10px; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 6px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+  }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #4a5ce0; }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--border); }
+  .btn-success { background: var(--correct); color: #fff; }
+  .btn-danger { background: var(--wrong); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12px; }
+  .btn-ghost { background: none; color: var(--text2); border: 1px solid var(--border); }
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+  .btn-full { width: 100%; justify-content: center; }
+
+  /* MAIN CONTENT */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .page-header {
+    padding: 20px 28px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+  .page-title-area { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .page-title { font-size: 22px; font-weight: 800; }
+  .page-subtitle { font-size: 12px; color: var(--text2); }
+  .page-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .content-area { flex: 1; overflow-y: auto; padding: 24px 28px; }
+  .content-area::-webkit-scrollbar { width: 6px; }
+  .content-area::-webkit-scrollbar-track { background: transparent; }
+  .content-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* WELCOME */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 20px;
+    text-align: center;
+  }
+  .welcome h2 { font-size: 36px; font-weight: 800; }
+  .welcome p { color: var(--text2); max-width: 420px; font-size: 15px; line-height: 1.6; }
+  .welcome-grid { display: flex; gap: 14px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+  .welcome-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    width: 180px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+    text-align: center;
+  }
+  .welcome-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .welcome-card .wc-icon { font-size: 28px; margin-bottom: 8px; }
+  .welcome-card .wc-title { font-size: 14px; font-weight: 700; }
+  .welcome-card .wc-desc { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  /* TABLE MODE */
+  .table-container { overflow-x: auto; border-radius: 10px; border: 1px solid var(--border); }
+  .study-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+  .study-table th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  .study-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .study-table tr:last-child td { border-bottom: none; }
+  .study-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .cell-input {
+    background: rgba(91,110,245,0.08);
+    border: 1px solid rgba(91,110,245,0.3);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 4px 8px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .cell-input:focus { border-color: var(--accent); }
+  .cell-input.correct { background: rgba(46,204,113,0.1); border-color: rgba(46,204,113,0.4); color: var(--correct); }
+  .cell-input.wrong { background: rgba(231,76,60,0.1); border-color: rgba(231,76,60,0.3); color: var(--wrong); }
+  .cell-droptarget {
+    min-width: 100px;
+    min-height: 32px;
+    background: rgba(91,110,245,0.05);
+    border: 1.5px dashed var(--border);
+    border-radius: 6px;
+    padding: 4px 8px;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+  }
+  .cell-droptarget.drag-over { background: rgba(91,110,245,0.15); border-color: var(--accent); }
+  .cell-droptarget.correct { background: rgba(46,204,113,0.1); border-color: var(--correct); color: var(--correct); border-style: solid; }
+  .cell-droptarget.wrong { background: rgba(231,76,60,0.1); border-color: var(--wrong); color: var(--wrong); border-style: solid; }
+  .cell-droptarget.filled { border-style: solid; border-color: var(--accent); }
+
+  /* ANSWER BIN */
+  .answer-bin-wrap { margin-top: 20px; }
+  .answer-bin-label { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+  .answer-bin { display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; padding: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+  .answer-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    cursor: grab;
+    user-select: none;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .answer-chip:hover { background: var(--border); border-color: var(--accent); }
+  .answer-chip.dragging { opacity: 0.4; }
+  .answer-chip.hidden-chip { display: none; }
+
+  /* MATCH MODE */
+  .match-container { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .match-col-label { font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+  .match-col { display: flex; flex-direction: column; gap: 8px; }
+  .match-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    transition: all 0.15s;
+  }
+  .match-term { font-weight: 600; }
+  .match-def {
+    cursor: grab;
+    user-select: none;
+  }
+  .match-def:hover { border-color: var(--accent); background: rgba(91,110,245,0.05); }
+  .match-def.dragging { opacity: 0.4; cursor: grabbing; }
+  .match-slot {
+    min-height: 50px;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    transition: all 0.15s;
+    color: var(--text2);
+  }
+  .match-slot.drag-over { background: rgba(91,110,245,0.1); border-color: var(--accent); }
+  .match-slot.correct { border-color: var(--correct); background: rgba(46,204,113,0.05); color: var(--correct); border-style: solid; }
+  .match-slot.wrong { border-color: var(--wrong); background: rgba(231,76,60,0.05); color: var(--wrong); border-style: solid; }
+  .match-slot.filled { border-style: solid; border-color: var(--accent); color: var(--text); }
+
+  /* SCORE */
+  .score-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--surface); border-radius: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+  .score-num { font-size: 24px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
+  .score-label { font-size: 12px; color: var(--text2); }
+  .score-track { flex: 1; min-width: 100px; height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .score-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.4s cubic-bezier(.25,.8,.25,1); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px;
+    width: 500px;
+    max-width: 95vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: scale(0.96);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal h3 { font-size: 18px; font-weight: 800; margin-bottom: 18px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    padding: 9px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+  .form-textarea { font-family: 'JetBrains Mono', monospace; font-size: 12px; min-height: 180px; resize: vertical; }
+  .form-select option { background: var(--surface2); }
+
+  /* EDIT TABLE */
+  .edit-table-wrap table { width: 100%; border-collapse: collapse; }
+  .edit-table-wrap th, .edit-table-wrap td { padding: 6px; border: 1px solid var(--border); }
+  .edit-table-wrap th { background: var(--surface2); font-size: 12px; color: var(--text2); }
+  .edit-table-wrap td input {
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    width: 100%;
+    outline: none;
+    padding: 2px 4px;
+  }
+  .edit-table-wrap td input:focus { background: rgba(91,110,245,0.08); border-radius: 3px; }
+  .row-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 16px; padding: 2px 6px; }
+  .row-del:hover { color: var(--wrong); }
+
+  /* TAGS */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .tag-table { background: rgba(91,110,245,0.15); color: var(--accent); }
+  .tag-match { background: rgba(245,166,35,0.15); color: var(--accent2); }
+
+  /* CHECKBOX CELLS */
+  .cb-check { font-size: 16px; }
+  .cb-yes { color: var(--correct); }
+  .cb-no { color: var(--text3); }
+
+  /* OPTIONS BAR */
+  .options-bar { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; padding: 10px 16px; background: var(--surface); border-radius: 10px; margin-bottom: 20px; }
+  .option-toggle { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text2); cursor: pointer; user-select: none; }
+  .option-toggle input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+
+  /* EDIT ROW TABLE */
+  .edit-match-row { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
+  .edit-match-row input { flex: 1; }
+
+  /* Notification */
+  .notif {
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 14px;
+    z-index: 2000;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .notif.show { transform: translateY(0); opacity: 1; }
+  .notif.success { border-color: var(--correct); }
+  .notif.error { border-color: var(--wrong); }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text2); }
+  .empty-state h3 { font-size: 20px; margin-bottom: 8px; }
+  .empty-state p { font-size: 14px; }
+  .section-divider { height: 1px; background: var(--border); margin: 24px 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">study<span>.</span>io</div>
+  <div class="header-actions">
+    <button class="btn btn-secondary btn-sm" id="btn-add-page">+ Add Page</button>
+    <button class="btn btn-secondary btn-sm" id="btn-export">⬇ Export</button>
+    <button class="btn btn-secondary btn-sm" id="btn-import">⬆ Import</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span>Pages</span>
+    </div>
+    <div class="sidebar-scroll" id="sidebar-nav"></div>
+    <div class="sidebar-footer">
+      <button class="btn btn-primary btn-full btn-sm" id="sidebar-add-page">＋ Add Page</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div id="page-header-area" class="page-header" style="display:none">
+      <div class="page-title-area">
+        <div class="page-title" id="page-title-display"></div>
+        <div class="page-subtitle" id="page-subtitle-display"></div>
+      </div>
+      <div class="page-controls" id="page-controls"></div>
+    </div>
+    <div class="content-area" id="content-area">
+      <div class="welcome">
+        <div style="font-size:52px">🧠</div>
+        <h2>Study Tool</h2>
+        <p>A modern flashcard and study table app. Add pages with tables or drag-and-drop matching exercises — all fully editable.</p>
+        <div class="welcome-grid">
+          <div class="welcome-card" onclick="openAddPageModal('table')">
+            <div class="wc-icon">📋</div>
+            <div class="wc-title">Table Page</div>
+            <div class="wc-desc">Fill-in-the-blank table with drag & drop answers</div>
+          </div>
+          <div class="welcome-card" onclick="openAddPageModal('match')">
+            <div class="wc-icon">🔗</div>
+            <div class="wc-title">Match Page</div>
+            <div class="wc-desc">Drag definitions to match the correct terms</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notif" id="notif"></div>
+
+<!-- MODAL: ADD / EDIT PAGE -->
+<div class="modal-overlay" id="page-modal">
+  <div class="modal">
+    <h3 id="modal-title">Add New Page</h3>
+    <div class="form-group">
+      <label class="form-label">Page Name</label>
+      <input class="form-input" id="modal-name" placeholder="e.g. OSI Layers" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Subject / Group</label>
+      <input class="form-input" id="modal-subject" placeholder="e.g. CompTIA Network+" list="subject-datalist" />
+      <datalist id="subject-datalist"></datalist>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Page Type</label>
+      <select class="form-select" id="modal-type" onchange="onModalTypeChange()">
+        <option value="table">📋 Table (fill-in-the-blank with answer bin)</option>
+        <option value="match">🔗 Drag & Drop Match</option>
+      </select>
+    </div>
+    <!-- TABLE EDITOR -->
+    <div id="modal-table-section">
+      <div class="form-group">
+        <label class="form-label">Columns (comma-separated)</label>
+        <input class="form-input" id="modal-columns" placeholder="e.g. Socket Type, Pins, Year, Supported CPUs" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Which column(s) are quiz answers? (comma-separated column names, or leave blank for last column)</label>
+        <input class="form-input" id="modal-answer-cols" placeholder="e.g. Pins, Year" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Rows</label>
+        <div id="modal-rows-editor" class="edit-table-wrap">
+          <table id="modal-rows-table"><thead id="modal-rows-head"></thead><tbody id="modal-rows-body"></tbody></table>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addModalRow()">+ Add Row</button>
+      </div>
+    </div>
+    <!-- MATCH EDITOR -->
+    <div id="modal-match-section" style="display:none">
+      <div class="form-group">
+        <label class="form-label">Term/Definition Pairs</label>
+        <div id="modal-match-rows"></div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addMatchRow()">+ Add Pair</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('page-modal')">Cancel</button>
+      <button class="btn btn-primary" id="modal-save-btn" onclick="savePage()">Save Page</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: RENAME SUBJECT -->
+<div class="modal-overlay" id="subject-modal">
+  <div class="modal" style="max-width:340px">
+    <h3>Rename Subject</h3>
+    <div class="form-group">
+      <input class="form-input" id="subject-rename-input" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('subject-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSubjectRename()">Save</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="import-file-input" accept=".json" style="display:none" />
+
+<script>
+// ─── DATA STORE ───────────────────────────────────────────────────────────────
+let pages = [];
+let currentPageId = null;
+let editingPageId = null;
+let renamingSubject = null;
+
+// drag state
+let dragItem = null;
+let dragSource = null; // 'bin' or 'slot-X'
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+function init() {
+  const saved = localStorage.getItem('studytool_pages_v2');
+  if (saved) {
+    try { pages = JSON.parse(saved); } catch(e) { pages = []; }
+  } else {
+    pages = getDefaultPages();
+    save();
+  }
+  renderSidebar();
+  if (pages.length === 0) showWelcome();
+  else showWelcome();
+}
+
+function save() {
+  localStorage.setItem('studytool_pages_v2', JSON.stringify(pages));
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+// ─── DEFAULT DATA ─────────────────────────────────────────────────────────────
+function getDefaultPages() {
+  return [
+    {
+      id: uid(), type: 'table', subject: 'CompTIA A+ 220-901', name: 'Motherboard Form Factors',
+      columns: ['Form Factor', 'Size', 'Metric Size'],
+      answerCols: ['Size', 'Metric Size'],
+      rows: [
+        ['ATX', '12" x 9.6"', '305mm x 244mm'],
+        ['Micro-ATX', '9.6" x 9.6"', '244mm x 244mm'],
+        ['Mini-ITX', '6.7" x 6.7"', '170mm x 170mm'],
+        ['Nano-ITX', '4.7" x 4.7"', '120mm x 120mm'],
+        ['Pico-ITX', '3.9" x 2.8"', '100mm x 72mm'],
+        ['Mobile-ITX', '2.4" x 2.4"', '60mm x 60mm'],
+      ]
+    },
+    {
+      id: uid(), type: 'table', subject: 'CompTIA A+ 220-901', name: 'RAM Types',
+      columns: ['Type', 'Pins', 'Notches', 'Voltage'],
+      answerCols: ['Pins', 'Voltage'],
+      rows: [
+        ['SDR DIMM','168','2','3.3'],
+        ['DDR DIMM','184','1','2.5'],
+        ['DDR2 DIMM','240','1','1.8'],
+        ['DDR3 DIMM','240','1','1.5'],
+        ['DDR SO-DIMM','200','1','2.5'],
+        ['DDR2 SO-DIMM','200','1','1.8'],
+        ['DDR3 SO-DIMM','204','1','1.5'],
+      ]
+    },
+    {
+      id: uid(), type: 'table', subject: 'CompTIA Network+', name: 'OSI Layers',
+      columns: ['Layer', 'Name', 'Description'],
+      answerCols: ['Name'],
+      rows: [
+        ['7','Application','Responsible for providing network services'],
+        ['6','Presentation','Protocol conversion, data translation'],
+        ['5','Session','Establishes and maintains communications sessions'],
+        ['4','Transport','Error-free end-to-end communications'],
+        ['3','Network','Logical network addressing, routing'],
+        ['2','Data Link','MAC addressing, logical topology'],
+        ['1','Physical','Physical medium, electrical signals'],
+      ]
+    },
+    {
+      id: uid(), type: 'match', subject: 'CompTIA Network+', name: 'Network Protocols',
+      pairs: [
+        { term: 'FTP', def: 'tcp/20, tcp/21 — File Transfer Protocol' },
+        { term: 'SSH', def: 'tcp/22 — Secure Shell (encrypted access)' },
+        { term: 'SMTP', def: 'tcp/25 — Simple Mail Transfer Protocol' },
+        { term: 'DNS', def: 'tcp/53, udp/53 — Domain Name System' },
+        { term: 'HTTP', def: 'tcp/80 — Hypertext Transfer Protocol' },
+        { term: 'HTTPS', def: 'tcp/443 — HTTP Secure (encrypted)' },
+        { term: 'RDP', def: 'tcp/3389 — Remote Desktop Protocol' },
+      ]
+    },
+    {
+      id: uid(), type: 'match', subject: 'CompTIA A+ 220-901', name: 'Wi-Fi Standards',
+      pairs: [
+        { term: '802.11a', def: '5 GHz — 54 Mbit/s — 120m range' },
+        { term: '802.11b', def: '2.4 GHz — 11 Mbit/s — 140m range' },
+        { term: '802.11g', def: '2.4 GHz — 54 Mbit/s — 140m range' },
+        { term: '802.11n', def: '2.4/5 GHz — 600 Mbit/s — MIMO' },
+        { term: '802.11ac', def: '5 GHz — 6,934 Mbit/s — MU-MIMO' },
+      ]
+    },
+    {
+      id: uid(), type: 'table', subject: 'CompTIA Security+', name: 'Hash Algorithms',
+      columns: ['Hash Name', 'Full Name', 'Bits', 'Notes'],
+      answerCols: ['Bits'],
+      rows: [
+        ['MD5','Message Digest Algorithm','128','Vulnerable to collisions'],
+        ['SHA-1','Secure Hash Algorithm','160','Vulnerable to collisions'],
+        ['SHA-2','Secure Hash Algorithm','Up to 512','Widely used'],
+        ['RIPEMD','RACE Integrity Primitives Evaluation Message Digest','160, 256, 320','Based on MD4'],
+      ]
+    },
+  ];
+}
+
+// ─── SIDEBAR ──────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = '';
+  const groups = {};
+  pages.forEach(p => {
+    const s = p.subject || 'Uncategorized';
+    if (!groups[s]) groups[s] = [];
+    groups[s].push(p);
+  });
+  // Update datalist
+  const dl = document.getElementById('subject-datalist');
+  dl.innerHTML = Object.keys(groups).map(s => `<option value="${escHtml(s)}">`).join('');
+
+  Object.entries(groups).forEach(([subj, grpPages]) => {
+    const grp = document.createElement('div');
+    grp.className = 'subject-group';
+    grp.innerHTML = `<div class="subject-label" onclick="toggleGroup(this)">
+      <span class="subj-name"><span>▾</span> ${escHtml(subj)}</span>
+      <span class="subj-edit" onclick="event.stopPropagation(); renameSubject('${escHtml(subj)}')" title="Rename">✏️</span>
+    </div>
+    <div class="subject-pages">
+      ${grpPages.map(p => `
+        <div class="page-item ${p.id === currentPageId ? 'active' : ''}" onclick="loadPage('${p.id}')">
+          <span class="page-icon">${p.type === 'table' ? '📋' : '🔗'}</span>
+          <span class="page-name">${escHtml(p.name)}</span>
+          <span class="page-actions">
+            <button class="icon-btn" onclick="event.stopPropagation(); editPage('${p.id}')" title="Edit">✏️</button>
+            <button class="icon-btn" onclick="event.stopPropagation(); deletePage('${p.id}')" title="Delete">🗑️</button>
+          </span>
+        </div>
+      `).join('')}
+    </div>`;
+    nav.appendChild(grp);
+  });
+}
+
+function toggleGroup(el) {
+  const pages = el.nextElementSibling;
+  if (pages.style.display === 'none') pages.style.display = '';
+  else pages.style.display = 'none';
+}
+
+// ─── PAGE LOAD ────────────────────────────────────────────────────────────────
+function showWelcome() {
+  currentPageId = null;
+  document.getElementById('page-header-area').style.display = 'none';
+  document.getElementById('content-area').innerHTML = `
+    <div class="welcome">
+      <div style="font-size:52px">🧠</div>
+      <h2>Study Tool</h2>
+      <p>A modern flashcard and study table app. Select a page from the sidebar, or add a new one.</p>
+      <div class="welcome-grid">
+        <div class="welcome-card" onclick="openAddPageModal('table')">
+          <div class="wc-icon">📋</div><div class="wc-title">Table Page</div>
+          <div class="wc-desc">Fill-in-the-blank table with answer bin</div>
+        </div>
+        <div class="welcome-card" onclick="openAddPageModal('match')">
+          <div class="wc-icon">🔗</div><div class="wc-title">Match Page</div>
+          <div class="wc-desc">Drag definitions to matching terms</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function loadPage(id) {
+  currentPageId = id;
+  renderSidebar();
+  const page = pages.find(p => p.id === id);
+  if (!page) return;
+  const hdr = document.getElementById('page-header-area');
+  hdr.style.display = 'flex';
+  document.getElementById('page-title-display').textContent = page.name;
+  document.getElementById('page-subtitle-display').innerHTML = `
+    <span class="tag ${page.type === 'table' ? 'tag-table' : 'tag-match'}">${page.type === 'table' ? 'Table' : 'Match'}</span>
+    &nbsp;${escHtml(page.subject || '')}`;
+
+  if (page.type === 'table') renderTablePage(page);
+  else renderMatchPage(page);
+}
+
+// ─── TABLE PAGE ───────────────────────────────────────────────────────────────
+function renderTablePage(page) {
+  const ctrl = document.getElementById('page-controls');
+  ctrl.innerHTML = `
+    <button class="btn btn-ghost btn-sm" onclick="checkTableAnswers('${page.id}')">✓ Check</button>
+    <button class="btn btn-ghost btn-sm" onclick="resetTablePage('${page.id}')">↺ Reset</button>
+    <button class="btn btn-secondary btn-sm" onclick="editPage('${page.id}')">✏️ Edit</button>`;
+
+  const answerCols = page.answerCols || [page.columns[page.columns.length - 1]];
+  const answerColIdxs = answerCols.map(ac => page.columns.indexOf(ac)).filter(i => i >= 0);
+
+  // Collect all answers, shuffle
+  const allAnswers = [];
+  page.rows.forEach(row => {
+    answerColIdxs.forEach(ci => { if (row[ci] !== undefined) allAnswers.push(row[ci]); });
+  });
+  shuffle(allAnswers);
+
+  // Options
+  let hideUsed = false, deleteUsed = false, shuffleRows = false;
+  let displayRows = [...page.rows];
+
+  function buildTable() {
+    if (shuffleRows) shuffle(displayRows);
+    let html = `
+      <div class="options-bar">
+        <label class="option-toggle"><input type="checkbox" id="opt-hide" ${hideUsed?'checked':''}> Hide Used Values</label>
+        <label class="option-toggle"><input type="checkbox" id="opt-delete" ${deleteUsed?'checked':''}> Delete Used Values</label>
+        <label class="option-toggle"><input type="checkbox" id="opt-shuffle" ${shuffleRows?'checked':''}> Shuffle Rows</label>
+      </div>
+      <div class="score-bar" id="score-bar" style="display:none">
+        <div><div class="score-num" id="score-num">0</div><div class="score-label">correct</div></div>
+        <div class="score-track"><div class="score-fill" id="score-fill" style="width:0%"></div></div>
+        <div style="font-size:12px;color:var(--text2)" id="score-total"></div>
+      </div>
+      <div class="table-container">
+        <table class="study-table">
+          <thead><tr>${page.columns.map(c => `<th>${escHtml(c)}</th>`).join('')}</tr></thead>
+          <tbody>
+            ${displayRows.map((row, ri) => `<tr>${row.map((cell, ci) => {
+              if (answerColIdxs.includes(ci)) {
+                return `<td><div class="cell-droptarget" id="slot-${ri}-${ci}" data-answer="${escHtml(cell)}" data-ri="${ri}" data-ci="${ci}"
+                  ondragover="onDragOver(event,this)" ondrop="onDrop(event,this,'${page.id}')" ondragleave="onDragLeave(this)"
+                  onclick="onSlotClick(this,'${page.id}')">
+                  <span class="slot-text"></span>
+                </div></td>`;
+              }
+              return `<td>${escHtml(cell)}</td>`;
+            }).join('')}</tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="answer-bin-wrap">
+        <div class="answer-bin-label">Answer Bin</div>
+        <div class="answer-bin" id="answer-bin"
+          ondragover="event.preventDefault()" ondrop="onDropToBin(event,'${page.id}')">
+          ${allAnswers.map((a, i) => `<div class="answer-chip" id="chip-${i}" draggable="true"
+            data-value="${escHtml(a)}"
+            ondragstart="onChipDragStart(event,this)"
+            ondragend="onChipDragEnd(event,this)"
+            onclick="onChipClick(this,'${page.id}')">${escHtml(a)}</div>`).join('')}
+        </div>
+      </div>`;
+    document.getElementById('content-area').innerHTML = html;
+
+    // wire options
+    document.getElementById('opt-hide').addEventListener('change', e => { hideUsed = e.target.checked; });
+    document.getElementById('opt-delete').addEventListener('change', e => { deleteUsed = e.target.checked; });
+    document.getElementById('opt-shuffle').addEventListener('change', e => {
+      shuffleRows = e.target.checked;
+      if (shuffleRows) shuffle(displayRows);
+      buildTable();
+    });
+  }
+  buildTable();
+}
+
+// ─── DRAG: TABLE ──────────────────────────────────────────────────────────────
+let activeChip = null;
+let selectedChip = null;
+let selectedSlot = null;
+
+function onChipDragStart(e, el) {
+  dragItem = el.dataset.value;
+  dragSource = 'bin';
+  el.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', el.dataset.value);
+  activeChip = el;
+}
+function onChipDragEnd(e, el) { el.classList.remove('dragging'); activeChip = null; }
+
+function onDragOver(e, el) { e.preventDefault(); el.classList.add('drag-over'); }
+function onDragLeave(el) { el.classList.remove('drag-over'); }
+
+function onDrop(e, slotEl, pageId) {
+  e.preventDefault();
+  slotEl.classList.remove('drag-over');
+  const val = e.dataTransfer.getData('text/plain') || dragItem;
+  if (!val) return;
+  // Return previous value to bin if slot was filled
+  returnSlotValueToBin(slotEl);
+  slotEl.querySelector('.slot-text').textContent = val;
+  slotEl.classList.add('filled');
+  slotEl.classList.remove('correct','wrong');
+  // Hide chip from bin
+  hideChipFromBin(val);
+}
+
+function onDropToBin(e, pageId) {
+  e.preventDefault();
+  // If dragging from a slot, clear that slot
+  if (dragSource && dragSource.startsWith('slot-')) {
+    const slot = document.getElementById(dragSource.replace('slot-', ''));
+    if (slot) {
+      slot.querySelector('.slot-text').textContent = '';
+      slot.classList.remove('filled','correct','wrong');
+    }
+  }
+  dragSource = null;
+}
+
+function onSlotClick(slotEl, pageId) {
+  if (selectedChip) {
+    const val = selectedChip.dataset.value;
+    returnSlotValueToBin(slotEl);
+    slotEl.querySelector('.slot-text').textContent = val;
+    slotEl.classList.add('filled');
+    slotEl.classList.remove('correct','wrong');
+    hideChipFromBin(val);
+    selectedChip.style.outline = '';
+    selectedChip = null;
+    selectedSlot = null;
+  } else if (slotEl.classList.contains('filled')) {
+    // select slot to move
+    if (selectedSlot === slotEl) { selectedSlot.style.outline = ''; selectedSlot = null; return; }
+    if (selectedSlot) selectedSlot.style.outline = '';
+    selectedSlot = slotEl;
+    slotEl.style.outline = '2px solid var(--accent)';
+  }
+}
+
+function onChipClick(chipEl, pageId) {
+  if (selectedSlot) {
+    const val = chipEl.dataset.value;
+    returnSlotValueToBin(selectedSlot);
+    selectedSlot.querySelector('.slot-text').textContent = val;
+    selectedSlot.classList.add('filled');
+    selectedSlot.classList.remove('correct','wrong');
+    hideChipFromBin(val);
+    selectedSlot.style.outline = '';
+    selectedSlot = null;
+    chipEl.style.outline = '';
+    selectedChip = null;
+  } else {
+    if (selectedChip === chipEl) { chipEl.style.outline = ''; selectedChip = null; return; }
+    if (selectedChip) selectedChip.style.outline = '';
+    selectedChip = chipEl;
+    chipEl.style.outline = '2px solid var(--accent)';
+  }
+}
+
+function hideChipFromBin(val) {
+  const chips = document.querySelectorAll('.answer-chip');
+  for (const c of chips) {
+    if (c.dataset.value === val && !c.classList.contains('hidden-chip')) {
+      c.classList.add('hidden-chip');
+      break;
+    }
+  }
+}
+
+function returnSlotValueToBin(slotEl) {
+  const prev = slotEl.querySelector('.slot-text').textContent;
+  if (!prev) return;
+  const chips = document.querySelectorAll('.answer-chip');
+  for (const c of chips) {
+    if (c.dataset.value === prev && c.classList.contains('hidden-chip')) {
+      c.classList.remove('hidden-chip');
+      break;
+    }
+  }
+}
+
+function checkTableAnswers(pageId) {
+  const slots = document.querySelectorAll('.cell-droptarget');
+  let correct = 0, total = 0;
+  slots.forEach(slot => {
+    const answer = slot.dataset.answer;
+    const given = slot.querySelector('.slot-text').textContent.trim();
+    total++;
+    slot.classList.remove('correct','wrong');
+    if (!given) return;
+    if (given.toLowerCase() === answer.toLowerCase()) {
+      slot.classList.add('correct'); correct++;
+      const opt = document.getElementById('opt-hide');
+      if (opt && opt.checked) {
+        const chips = document.querySelectorAll('.answer-chip');
+        for (const c of chips) { if (c.dataset.value === given) { c.classList.add('hidden-chip'); break; } }
+      }
+      const optDel = document.getElementById('opt-delete');
+      if (optDel && optDel.checked) {
+        const chips = document.querySelectorAll('.answer-chip');
+        for (const c of chips) { if (c.dataset.value === given) { c.remove(); break; } }
+      }
+    } else {
+      slot.classList.add('wrong');
+    }
+  });
+  const bar = document.getElementById('score-bar');
+  if (bar) {
+    bar.style.display = 'flex';
+    document.getElementById('score-num').textContent = correct;
+    document.getElementById('score-total').textContent = `of ${total} filled`;
+    document.getElementById('score-fill').style.width = total ? (correct/total*100)+'%' : '0%';
+  }
+}
+
+function resetTablePage(pageId) {
+  loadPage(pageId);
+}
+
+// ─── MATCH PAGE ───────────────────────────────────────────────────────────────
+function renderMatchPage(page) {
+  const ctrl = document.getElementById('page-controls');
+  ctrl.innerHTML = `
+    <button class="btn btn-ghost btn-sm" onclick="checkMatchAnswers('${page.id}')">✓ Check</button>
+    <button class="btn btn-ghost btn-sm" onclick="loadPage('${page.id}')">↺ Reset</button>
+    <button class="btn btn-secondary btn-sm" onclick="editPage('${page.id}')">✏️ Edit</button>`;
+
+  const pairs = [...page.pairs];
+  const shuffledDefs = shuffle([...pairs.map((p,i) => ({...p, origIdx: i}))]);
+
+  let html = `
+    <div class="score-bar" id="score-bar" style="display:none">
+      <div><div class="score-num" id="score-num">0</div><div class="score-label">correct</div></div>
+      <div class="score-track"><div class="score-fill" id="score-fill" style="width:0%"></div></div>
+      <div style="font-size:12px;color:var(--text2)" id="score-total"></div>
+    </div>
+    <div class="match-container">
+      <div>
+        <div class="match-col-label">Terms</div>
+        <div class="match-col" id="match-terms">
+          ${pairs.map((p,i) => `
+            <div>
+              <div class="match-item match-term">${escHtml(p.term)}</div>
+              <div class="match-slot" id="mslot-${i}" data-idx="${i}" data-answer="${escHtml(p.def)}"
+                ondragover="mDragOver(event,this)" ondragleave="mDragLeave(this)" ondrop="mDrop(event,this,'${page.id}')"
+                onclick="mSlotClick(this,'${page.id}')">
+                <span class="slot-text" style="font-size:12px;color:var(--text2)">Drop here…</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="match-col-label">Definitions</div>
+        <div class="match-col" id="match-defs">
+          ${shuffledDefs.map((p,i) => `
+            <div class="match-item match-def" id="mdef-${i}" draggable="true"
+              data-value="${escHtml(p.def)}"
+              ondragstart="mDefDragStart(event,this)"
+              ondragend="mDefDragEnd(event,this)"
+              onclick="mDefClick(this,'${page.id}')"
+              >${escHtml(p.def)}</div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('content-area').innerHTML = html;
+}
+
+let mActiveChip = null, mSelectedChip = null, mSelectedSlot = null;
+
+function mDefDragStart(e, el) {
+  mActiveChip = el;
+  el.classList.add('dragging');
+  e.dataTransfer.setData('text/plain', el.dataset.value);
+}
+function mDefDragEnd(e, el) { el.classList.remove('dragging'); mActiveChip = null; }
+function mDragOver(e, el) { e.preventDefault(); el.classList.add('drag-over'); }
+function mDragLeave(el) { el.classList.remove('drag-over'); }
+
+function mDrop(e, slotEl, pageId) {
+  e.preventDefault();
+  slotEl.classList.remove('drag-over');
+  const val = e.dataTransfer.getData('text/plain');
+  if (!val) return;
+  // return previous if any
+  mReturnToPool(slotEl);
+  // Hide def card
+  mHideDef(val);
+  slotEl.querySelector('.slot-text').textContent = val;
+  slotEl.querySelector('.slot-text').style.color = 'var(--text)';
+  slotEl.querySelector('.slot-text').style.fontSize = '13px';
+  slotEl.classList.add('filled');
+  slotEl.classList.remove('correct','wrong');
+}
+
+function mReturnToPool(slotEl) {
+  const prev = slotEl.querySelector('.slot-text').textContent;
+  if (!prev || prev === 'Drop here…') return;
+  const defs = document.querySelectorAll('.match-def');
+  for (const d of defs) {
+    if (d.dataset.value === prev && d.style.display === 'none') {
+      d.style.display = '';
+      break;
+    }
+  }
+}
+
+function mHideDef(val) {
+  const defs = document.querySelectorAll('.match-def');
+  for (const d of defs) {
+    if (d.dataset.value === val && d.style.display !== 'none') {
+      d.style.display = 'none';
+      break;
+    }
+  }
+}
+
+function mDefClick(defEl, pageId) {
+  if (mSelectedSlot) {
+    const val = defEl.dataset.value;
+    mReturnToPool(mSelectedSlot);
+    mHideDef(val);
+    mSelectedSlot.querySelector('.slot-text').textContent = val;
+    mSelectedSlot.querySelector('.slot-text').style.color = 'var(--text)';
+    mSelectedSlot.querySelector('.slot-text').style.fontSize = '13px';
+    mSelectedSlot.classList.add('filled');
+    mSelectedSlot.classList.remove('correct','wrong');
+    mSelectedSlot.style.outline = '';
+    mSelectedSlot = null;
+    if (mSelectedChip) { mSelectedChip.style.outline = ''; mSelectedChip = null; }
+  } else {
+    if (mSelectedChip === defEl) { defEl.style.outline = ''; mSelectedChip = null; return; }
+    if (mSelectedChip) mSelectedChip.style.outline = '';
+    mSelectedChip = defEl;
+    defEl.style.outline = '2px solid var(--accent2)';
+  }
+}
+
+function mSlotClick(slotEl, pageId) {
+  if (mSelectedChip) {
+    mDrop({preventDefault:()=>{}, dataTransfer:{getData:()=>mSelectedChip.dataset.value}}, slotEl, pageId);
+    mSelectedChip.style.outline = ''; mSelectedChip = null;
+    if (mSelectedSlot) { mSelectedSlot.style.outline = ''; mSelectedSlot = null; }
+  } else if (slotEl.classList.contains('filled')) {
+    if (mSelectedSlot === slotEl) { slotEl.style.outline = ''; mSelectedSlot = null; return; }
+    if (mSelectedSlot) mSelectedSlot.style.outline = '';
+    mSelectedSlot = slotEl;
+    slotEl.style.outline = '2px solid var(--accent)';
+  }
+}
+
+function checkMatchAnswers(pageId) {
+  const slots = document.querySelectorAll('.match-slot');
+  let correct = 0, total = slots.length;
+  slots.forEach(slot => {
+    const answer = slot.dataset.answer;
+    const given = slot.querySelector('.slot-text').textContent;
+    if (!given || given === 'Drop here…') return;
+    slot.classList.remove('correct','wrong');
+    if (given === answer) { slot.classList.add('correct'); correct++; }
+    else slot.classList.add('wrong');
+  });
+  const bar = document.getElementById('score-bar');
+  if (bar) {
+    bar.style.display = 'flex';
+    document.getElementById('score-num').textContent = correct;
+    document.getElementById('score-total').textContent = `of ${total}`;
+    document.getElementById('score-fill').style.width = (correct/total*100)+'%';
+  }
+}
+
+// ─── MODAL: ADD / EDIT PAGE ───────────────────────────────────────────────────
+function openAddPageModal(type) {
+  editingPageId = null;
+  document.getElementById('modal-title').textContent = 'Add New Page';
+  document.getElementById('modal-save-btn').textContent = 'Add Page';
+  document.getElementById('modal-name').value = '';
+  document.getElementById('modal-subject').value = '';
+  document.getElementById('modal-columns').value = '';
+  document.getElementById('modal-answer-cols').value = '';
+  document.getElementById('modal-type').value = type || 'table';
+  onModalTypeChange();
+  clearModalRows();
+  if (type === 'table') addModalRow();
+  else addMatchRow();
+  openModal('page-modal');
+}
+
+function editPage(id) {
+  const page = pages.find(p => p.id === id);
+  if (!page) return;
+  editingPageId = id;
+  document.getElementById('modal-title').textContent = 'Edit Page';
+  document.getElementById('modal-save-btn').textContent = 'Save Changes';
+  document.getElementById('modal-name').value = page.name;
+  document.getElementById('modal-subject').value = page.subject || '';
+  document.getElementById('modal-type').value = page.type;
+  onModalTypeChange();
+
+  if (page.type === 'table') {
+    document.getElementById('modal-columns').value = page.columns.join(', ');
+    document.getElementById('modal-answer-cols').value = (page.answerCols || []).join(', ');
+    clearModalRows();
+    const head = buildModalRowsHead(page.columns);
+    page.rows.forEach(r => addModalRow(r, page.columns.length));
+  } else {
+    clearModalRows();
+    page.pairs.forEach(pair => addMatchRow(pair.term, pair.def));
+  }
+  openModal('page-modal');
+}
+
+function onModalTypeChange() {
+  const t = document.getElementById('modal-type').value;
+  document.getElementById('modal-table-section').style.display = t === 'table' ? '' : 'none';
+  document.getElementById('modal-match-section').style.display = t === 'match' ? '' : 'none';
+}
+
+function buildModalRowsHead(cols) {
+  const head = document.getElementById('modal-rows-head');
+  head.innerHTML = `<tr>${cols.map(c=>`<th>${escHtml(c)}</th>`).join('')}<th style="width:32px"></th></tr>`;
+}
+
+function clearModalRows() {
+  document.getElementById('modal-rows-body').innerHTML = '';
+  document.getElementById('modal-rows-head').innerHTML = '';
+  document.getElementById('modal-match-rows').innerHTML = '';
+}
+
+function addModalRow(values, colCount) {
+  const cols = document.getElementById('modal-columns').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const n = cols.length || colCount || 2;
+  buildModalRowsHead(cols.length ? cols : Array.from({length:n},(_,i)=>`Col ${i+1}`));
+  const body = document.getElementById('modal-rows-body');
+  const tr = document.createElement('tr');
+  for (let i = 0; i < n; i++) {
+    const td = document.createElement('td');
+    const inp = document.createElement('input');
+    inp.value = values ? (values[i] || '') : '';
+    td.appendChild(inp);
+    tr.appendChild(td);
+  }
+  const del = document.createElement('td');
+  del.innerHTML = `<button class="row-del" onclick="this.closest('tr').remove()">✕</button>`;
+  tr.appendChild(del);
+  body.appendChild(tr);
+}
+
+function addMatchRow(term, def) {
+  const container = document.getElementById('modal-match-rows');
+  const row = document.createElement('div');
+  row.className = 'edit-match-row';
+  row.innerHTML = `<input class="form-input" placeholder="Term" value="${escHtml(term||'')}" />
+    <input class="form-input" placeholder="Definition" value="${escHtml(def||'')}" />
+    <button class="btn btn-ghost btn-sm" onclick="this.parentElement.remove()">✕</button>`;
+  container.appendChild(row);
+}
+
+function savePage() {
+  const name = document.getElementById('modal-name').value.trim();
+  const subject = document.getElementById('modal-subject').value.trim();
+  const type = document.getElementById('modal-type').value;
+  if (!name) { showNotif('Please enter a page name', 'error'); return; }
+
+  let page = { id: editingPageId || uid(), name, subject, type };
+
+  if (type === 'table') {
+    const cols = document.getElementById('modal-columns').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if (!cols.length) { showNotif('Please add at least one column', 'error'); return; }
+    const answerColsRaw = document.getElementById('modal-answer-cols').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const answerCols = answerColsRaw.length ? answerColsRaw : [cols[cols.length-1]];
+    const rows = [];
+    document.querySelectorAll('#modal-rows-body tr').forEach(tr => {
+      const cells = [...tr.querySelectorAll('input')].map(i => i.value.trim());
+      if (cells.some(c=>c)) rows.push(cells);
+    });
+    if (!rows.length) { showNotif('Please add at least one row', 'error'); return; }
+    page.columns = cols;
+    page.answerCols = answerCols;
+    page.rows = rows;
+  } else {
+    const pairs = [];
+    document.querySelectorAll('#modal-match-rows .edit-match-row').forEach(row => {
+      const [t, d] = row.querySelectorAll('input');
+      if (t.value.trim() && d.value.trim()) pairs.push({ term: t.value.trim(), def: d.value.trim() });
+    });
+    if (!pairs.length) { showNotif('Please add at least one pair', 'error'); return; }
+    page.pairs = pairs;
+  }
+
+  if (editingPageId) {
+    const idx = pages.findIndex(p => p.id === editingPageId);
+    if (idx >= 0) pages[idx] = page;
+  } else {
+    pages.push(page);
+  }
+  save();
+  closeModal('page-modal');
+  renderSidebar();
+  loadPage(page.id);
+  showNotif(editingPageId ? 'Page updated!' : 'Page added!', 'success');
+  editingPageId = null;
+}
+
+function deletePage(id) {
+  if (!confirm('Delete this page?')) return;
+  pages = pages.filter(p => p.id !== id);
+  save();
+  if (currentPageId === id) showWelcome();
+  renderSidebar();
+  showNotif('Page deleted', 'success');
+}
+
+// ─── RENAME SUBJECT ───────────────────────────────────────────────────────────
+function renameSubject(subj) {
+  renamingSubject = subj;
+  document.getElementById('subject-rename-input').value = subj;
+  openModal('subject-modal');
+}
+
+function saveSubjectRename() {
+  const newName = document.getElementById('subject-rename-input').value.trim();
+  if (!newName) return;
+  pages.forEach(p => { if (p.subject === renamingSubject) p.subject = newName; });
+  save();
+  renderSidebar();
+  closeModal('subject-modal');
+  showNotif('Subject renamed!', 'success');
+}
+
+// ─── EXPORT / IMPORT ──────────────────────────────────────────────────────────
+document.getElementById('btn-export').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(pages, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'studytool-pages.json';
+  a.click();
+});
+document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-file-input').click());
+document.getElementById('import-file-input').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    try {
+      const imported = JSON.parse(ev.target.result);
+      if (!Array.isArray(imported)) throw new Error();
+      pages = imported;
+      save();
+      renderSidebar();
+      showWelcome();
+      showNotif('Imported successfully!', 'success');
+    } catch { showNotif('Invalid file format', 'error'); }
+  };
+  r.readAsText(file);
+  e.target.value = '';
+});
+
+// ─── MODAL HELPERS ────────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+});
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+let notifTimer = null;
+function showNotif(msg, type) {
+  const el = document.getElementById('notif');
+  el.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+  el.className = 'notif show ' + (type || '');
+  if (notifTimer) clearTimeout(notifTimer);
+  notifTimer = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ─── HEADER BTNS ──────────────────────────────────────────────────────────────
+document.getElementById('btn-add-page').addEventListener('click', () => openAddPageModal('table'));
+document.getElementById('sidebar-add-page').addEventListener('click', () => openAddPageModal('table'));
+
+// Column input auto-rebuilds row headers
+document.getElementById('modal-columns').addEventListener('input', () => {
+  const rows = document.querySelectorAll('#modal-rows-body tr');
+  if (rows.length > 0) {
+    const cols = document.getElementById('modal-columns').value.split(',').map(s=>s.trim()).filter(Boolean);
+    buildModalRowsHead(cols);
+  }
+});
+
+// ─── START ────────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
